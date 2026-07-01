@@ -1,0 +1,24 @@
+.questlog-dashboard { padding: 8px 12px; }
+.questlog-bar { height: 8px; background: var(--background-modifier-border); border-radius: 4px; overflow: hidden; }
+.questlog-bar > span { display: block; height: 100%; background: var(--interactive-accent); }
+.questlog-skills-header { margin-top: 2em; }
+.questlog-inventory-header { margin-top: 3em; }
+.questlog-skill { margin-bottom: 1em; }
+.questlog-skill:last-child { margin-bottom: 0; }
+.questlog-bar.questlog-hp > span { background: var(--color-red, #e5534b); }
+.questlog-streak { margin: 0.25em 0 0.5em; }
+.questlog-actions { display: flex; gap: 12px; margin-top: 1em; }
+.questlog-shop-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.questlog-shop-balance { margin-left: auto; }
+.questlog-shop-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.questlog-shop-item-info { display: flex; flex-direction: column; min-width: 0; }
+.questlog-shop-item-info > small { color: var(--text-muted); }
+.questlog-shop-item-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
+.questlog-laststamp { color: var(--text-muted); font-size: 0.85em; margin: 0.25em 0 0.5em; }
+.questlog-statusbar { cursor: pointer; }
+.ql-glyph { display: inline-block; margin: 0 1px; font-style: normal; }
+.ql-rank-badge { margin-left: 0.5em; font-size: 0.8em; color: var(--text-muted); font-weight: normal; }
+.questlog-recap-section { margin-top: 1em; }
+.questlog-recap-sub { color: var(--text-muted); font-size: 0.85em; margin: 0.25em 0; }
+.questlog-recap-warn { color: var(--color-red, #e5534b); }
+.questlog-recap-levelup { margin: 0.15em 0; }
