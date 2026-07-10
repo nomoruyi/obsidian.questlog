@@ -20,6 +20,7 @@ export interface Recap {
 
   xpGained: number;
   coinsGained: number;
+  dayRewardCoins: number;
 
   hpStart: number;
   hpEnd: number;
@@ -89,6 +90,7 @@ export function buildRecap(args: RecapArgs): Recap {
     missedDays: result.missedDays,
     xpGained,
     coinsGained,
+    dayRewardCoins: result.dayRewardCoins,
     hpStart: result.hpStart,
     hpEnd: result.hpEnd,
     hpRegen: result.daysSettled * args.dailyRegen,

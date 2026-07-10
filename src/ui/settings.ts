@@ -128,6 +128,16 @@ export class QuestLogSettingTab extends PluginSettingTab {
         }),
       );
 
+    new Setting(containerEl)
+      .setName("Finalize day reward")
+      .setDesc("Coins per processed day at finalize. Missed days earn nothing. 0 = off.")
+      .addText((t) =>
+        t.setValue(String(cfg.finalizeDayReward)).onChange(async (v) => {
+          const n = Number(v);
+          if (!Number.isNaN(n)) { cfg.finalizeDayReward = n; await this.plugin.saveState(); }
+        }),
+      );
+
     containerEl.createEl("h3", { text: "Celebrations" });
 
     new Setting(containerEl)

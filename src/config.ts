@@ -27,6 +27,7 @@ export interface QuestLogConfig {
   regenUpgradePrice: number;
   regenUpgradeAmount: number;
   freezePrice: number;     // built-in freeze price
+  finalizeDayReward: number; // flat coins granted per processed day at finalize; 0 = off
   confettiEnabled: boolean; // master toggle for level-up confetti
   sfxEnabled: boolean;      // master toggle for level-up sound
   missionRolloverEnabled: boolean; // copy unfinished missions into today at finalize
@@ -65,6 +66,7 @@ export const DEFAULT_CONFIG: QuestLogConfig = {
   regenUpgradePrice: 5000,
   regenUpgradeAmount: 2,
   freezePrice: 50,
+  finalizeDayReward: 20,
   confettiEnabled: true,
   sfxEnabled: true,
   missionRolloverEnabled: true,

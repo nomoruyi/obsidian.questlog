@@ -44,6 +44,9 @@ export class RecapModal extends Modal {
     // Haul
     const haul = el.createDiv({ cls: "questlog-recap-section" });
     haul.createEl("p", { text: `🪙 +${r.coinsGained} coins · ✨ +${r.xpGained} XP` });
+    if (r.dayRewardCoins > 0) {
+      haul.createEl("p", { text: `🎁 +${r.dayRewardCoins} finalize bonus · ${r.daysSettled} day(s)` });
+    }
 
     // Missions rolled over from the previous note
     const ro = this.rollover;

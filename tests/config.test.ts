@@ -31,4 +31,8 @@ describe("config economy defaults", () => {
   it("enables mission rollover by default", () => {
     expect(DEFAULT_CONFIG.missionRolloverEnabled).toBe(true);
   });
+
+  it("ships a default flat finalize-day reward of 20", () => {
+    expect(DEFAULT_CONFIG.finalizeDayReward).toBe(20);
+  });
 });

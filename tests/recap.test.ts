@@ -15,6 +15,7 @@ function mkResult(over: Partial<SettlementResult> = {}): SettlementResult {
     streakBefore: 0,
     streakAfter: 0,
     newLastSettledDate: "2026-06-28",
+    dayRewardCoins: 0,
     ...over,
   };
 }
@@ -47,6 +48,16 @@ describe("buildRecap", () => {
     }));
     expect(recap.xpGained).toBe(130);     // 100 + 30
     expect(recap.coinsGained).toBe(7);    // 3 + 4
+  });
+
+  it("passes the flat day reward through from the settlement result", () => {
+    const recap = buildRecap(mkArgs({
+      settledNotes: [NOTE_BODY, NOTE_MIND],
+      overallXpAtStart: 130,
+      result: mkResult({ daysSettled: 2, dayRewardCoins: 40 }),
+    }));
+    expect(recap.dayRewardCoins).toBe(40);
+    expect(recap.coinsGained).toBe(7);   // task coins stay separate
   });
 
   it("derives an overall level-up by subtracting the haul from the start XP", () => {

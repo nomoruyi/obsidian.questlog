@@ -24,6 +24,7 @@ export interface SettlementResult {
   streakBefore: number;
   streakAfter: number;
   newLastSettledDate: string;
+  dayRewardCoins: number;
 }
 
 // ISO date helpers (UTC, so no DST drift). ISO strings sort chronologically.
@@ -68,6 +69,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
     return {
       daysSettled: 0, missedDays: 0, hpStart, hpEnd: state.hp, tokensUsed: 0,
       setbackFired: false, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
+      dayRewardCoins: 0,
     };
   }
 
@@ -104,9 +106,13 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   const newLast = maxIso(state.lastSettledDate, lastDay);
   state.lastSettledDate = newLast;
 
+  const dayRewardCoins = config.finalizeDayReward * daysSettled;
+  state.coinsEarned += dayRewardCoins;
+
   return {
     daysSettled, missedDays, hpStart, hpEnd: state.hp, tokensUsed,
     setbackFired, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
+    dayRewardCoins,
   };
 }
 

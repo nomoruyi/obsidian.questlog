@@ -85,6 +85,33 @@ describe("settleDays", () => {
     expect(s.inventory.freeze).toBe(1);
   });
 
+  it("credits the flat day reward for each present day, missed days excluded", () => {
+    const s = { ...defaultState(), inventory: { freeze: 2 }, lastSettledDate: "2026-06-06" };
+    const map = { "2026-06-07": emptyNote() }; // 08 and 09 missed
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: DEFAULT_CONFIG });
+    expect(r.daysSettled).toBe(1);
+    expect(r.missedDays).toBe(2);
+    expect(r.dayRewardCoins).toBe(20);   // 1 present day * 20; 2 missed days earn nothing
+    expect(s.coinsEarned).toBe(20);
+  });
+
+  it("credits nothing when finalizeDayReward is 0", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-06" };
+    const map = { "2026-06-07": emptyNote(), "2026-06-08": emptyNote(), "2026-06-09": emptyNote() };
+    const cfg = { ...DEFAULT_CONFIG, finalizeDayReward: 0 };
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: cfg });
+    expect(r.daysSettled).toBe(3);
+    expect(r.dayRewardCoins).toBe(0);
+    expect(s.coinsEarned).toBe(0);
+  });
+
+  it("credits nothing on an empty range", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-09" };
+    const r = settleDays({ fromISO: "2026-06-10", todayISO: today, noteResolver: resolverOf({}), state: s, config: DEFAULT_CONFIG });
+    expect(r.dayRewardCoins).toBe(0);
+    expect(s.coinsEarned).toBe(0);
+  });
+
   it("is a no-op on an empty range and never moves lastSettledDate backward", () => {
     const s = { ...defaultState(), lastSettledDate: "2026-06-09" };
     const r = settleDays({ fromISO: "2026-06-10", todayISO: today, noteResolver: resolverOf({}), state: s, config: DEFAULT_CONFIG });
@@ -96,14 +123,14 @@ describe("settleDays", () => {
 
 describe("formatSettlement", () => {
   it("summarizes a normal run", () => {
-    const msg = formatSettlement({ daysSettled: 2, missedDays: 1, hpStart: 80, hpEnd: 65, tokensUsed: 1, setbackFired: false, streakBefore: 5, streakAfter: 7, newLastSettledDate: "2026-06-09" });
+    const msg = formatSettlement({ daysSettled: 2, missedDays: 1, hpStart: 80, hpEnd: 65, tokensUsed: 1, setbackFired: false, streakBefore: 5, streakAfter: 7, newLastSettledDate: "2026-06-09", dayRewardCoins: 40 });
     expect(msg).toContain("2 done, 1 missed");
     expect(msg).toContain("HP 80→65");
     expect(msg).toContain("🧊 1 used");
     expect(msg).toContain("🔥 streak 5→7");
   });
   it("reports an up-to-date no-op and a setback", () => {
-    expect(formatSettlement({ daysSettled: 0, missedDays: 0, hpStart: 50, hpEnd: 50, tokensUsed: 0, setbackFired: false, streakBefore: 1, streakAfter: 1, newLastSettledDate: "x" })).toContain("nothing to finalize");
-    expect(formatSettlement({ daysSettled: 1, missedDays: 0, hpStart: 10, hpEnd: 100, tokensUsed: 0, setbackFired: true, streakBefore: 1, streakAfter: 2, newLastSettledDate: "x" })).toContain("HP hit 0");
+    expect(formatSettlement({ daysSettled: 0, missedDays: 0, hpStart: 50, hpEnd: 50, tokensUsed: 0, setbackFired: false, streakBefore: 1, streakAfter: 1, newLastSettledDate: "x", dayRewardCoins: 0 })).toContain("nothing to finalize");
+    expect(formatSettlement({ daysSettled: 1, missedDays: 0, hpStart: 10, hpEnd: 100, tokensUsed: 0, setbackFired: true, streakBefore: 1, streakAfter: 2, newLastSettledDate: "x", dayRewardCoins: 20 })).toContain("HP hit 0");
   });
 });
