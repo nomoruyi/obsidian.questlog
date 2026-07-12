@@ -35,4 +35,8 @@ describe("config economy defaults", () => {
   it("ships a default flat finalize-day reward of 20", () => {
     expect(DEFAULT_CONFIG.finalizeDayReward).toBe(20);
   });
+
+  it("ships no excluded weekdays by default", () => {
+    expect(DEFAULT_CONFIG.excludedWeekdays).toEqual([]);
+  });
 });
