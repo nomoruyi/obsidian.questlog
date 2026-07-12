@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { enumerateDates, addDays, settleDays, formatSettlement, NoteResolver } from "../src/engine/settlement";
+import { enumerateDates, addDays, isExcludedWeekday, settleDays, formatSettlement, NoteResolver } from "../src/engine/settlement";
 import { DEFAULT_CONFIG } from "../src/config";
 import { defaultState } from "../src/state/state";
 import { ParsedNote, ParsedTask } from "../src/types";
@@ -22,6 +22,12 @@ describe("enumerateDates / addDays", () => {
     expect(enumerateDates("2026-06-01", "2026-06-03")).toEqual(["2026-06-01", "2026-06-02", "2026-06-03"]);
     expect(enumerateDates("2026-06-03", "2026-06-03")).toEqual(["2026-06-03"]);
     expect(enumerateDates("2026-06-04", "2026-06-03")).toEqual([]);
+  });
+  it("isExcludedWeekday matches the ISO date's UTC day-of-week", () => {
+    // 2026-06-07 is a Sunday, 2026-06-08 is a Monday
+    expect(isExcludedWeekday("2026-06-07", [0])).toBe(true);
+    expect(isExcludedWeekday("2026-06-08", [0])).toBe(false);
+    expect(isExcludedWeekday("2026-06-07", [])).toBe(false);
   });
 });
 
@@ -110,6 +116,44 @@ describe("settleDays", () => {
     const r = settleDays({ fromISO: "2026-06-10", todayISO: today, noteResolver: resolverOf({}), state: s, config: DEFAULT_CONFIG });
     expect(r.dayRewardCoins).toBe(0);
     expect(s.coinsEarned).toBe(0);
+  });
+
+  it("excluded weekday needs no note, still settles, regens HP, and stays streak-neutral", () => {
+    // 2026-06-07 is a Sunday; exclude it. 08 and 09 are normal days with notes.
+    const s = { ...defaultState(), hp: 50, lastSettledDate: "2026-06-06" };
+    const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
+    const map = { "2026-06-08": emptyNote(), "2026-06-09": emptyNote() }; // 07 has no note at all
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: cfg });
+    expect(r.missedDays).toBe(0);        // Sunday is exempt, not missed
+    expect(r.daysSettled).toBe(3);        // all 3 days count as settled
+    expect(s.hp).toBe(80);                // 50 + 3*10 regen, no damage anywhere
+    expect(s.streak).toBe(2);             // only the 2 non-excluded days grow the streak
+  });
+
+  it("excluded weekday cannot take damage even if a note with undone tasks exists", () => {
+    const s = { ...defaultState(), hp: 50, lastSettledDate: "2026-06-06" };
+    const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
+    const map = { "2026-06-07": { tasks: [undoneMust(), undoneMust(), undoneMust()], vices: [] } }; // 30 dmg, but 07 is Sunday/excluded
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: "2026-06-08", noteResolver: resolverOf(map), state: s, config: cfg });
+    expect(r.daysSettled).toBe(1);
+    expect(s.hp).toBe(60);                // regen only, damage ignored on excluded day
+  });
+
+  it("excluded weekday with no note does not consume freeze tokens or break the streak", () => {
+    const s = { ...defaultState(), streak: 5, inventory: { freeze: 0 }, lastSettledDate: "2026-06-06" };
+    const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: "2026-06-08", noteResolver: resolverOf({}), state: s, config: cfg });
+    expect(r.missedDays).toBe(0);
+    expect(r.tokensUsed).toBe(0);
+    expect(s.streak).toBe(5);             // neutral: neither grows nor breaks
+  });
+
+  it("excluded weekday still earns the flat day-reward coins", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-06" };
+    const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
+    const r = settleDays({ fromISO: "2026-06-07", todayISO: "2026-06-08", noteResolver: resolverOf({}), state: s, config: cfg });
+    expect(r.dayRewardCoins).toBe(20);    // 1 excluded day * finalizeDayReward(20)
+    expect(s.coinsEarned).toBe(20);
   });
 
   it("is a no-op on an empty range and never moves lastSettledDate backward", () => {

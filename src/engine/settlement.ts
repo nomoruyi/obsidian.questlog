@@ -42,6 +42,12 @@ export function enumerateDates(fromISO: string, toISO: string): string[] {
   return out;
 }
 
+export function isExcludedWeekday(dateISO: string, excludedWeekdays: number[]): boolean {
+  const [y, m, d] = dateISO.split("-").map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return excludedWeekdays.includes(dow);
+}
+
 function maxIso(a: string | null, b: string): string {
   if (!a) return b;
   return a >= b ? a : b;
@@ -74,15 +80,21 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   }
 
   let daysSettled = 0;
+  let streakDays = 0;
   let missedDays = 0;
   let setbackFired = false;
 
   for (const date of dates) {
-    const note = noteResolver(date);
-    if (note === null) { missedDays++; continue; }
+    const exempt = isExcludedWeekday(date, config.excludedWeekdays);
+    let note: ParsedNote | null = null;
+    if (!exempt) {
+      note = noteResolver(date);
+      if (note === null) { missedDays++; continue; }
+    }
     daysSettled++;
+    if (!exempt) streakDays++;
     if (config.hpEnabled) {
-      const damage = aggregateDayDamage(note, config);
+      const damage = exempt ? 0 : aggregateDayDamage(note!, config);
       const { hp, hitZero } = applyDay(state.hp, state.maxHP, state.dailyRegen, damage);
       state.hp = hp;
       if (hitZero && applySetback(state, config)) setbackFired = true;
@@ -95,7 +107,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
     if (tokens >= missedDays) {
       tokensUsed = missedDays;
       consumeFreeze(state, tokensUsed);
-      state.streak += daysSettled;
+      state.streak += streakDays;
     } else {
       tokensUsed = tokens;
       consumeFreeze(state, tokensUsed);

@@ -31,6 +31,7 @@ export interface QuestLogConfig {
   confettiEnabled: boolean; // master toggle for level-up confetti
   sfxEnabled: boolean;      // master toggle for level-up sound
   missionRolloverEnabled: boolean; // copy unfinished missions into today at finalize
+  excludedWeekdays: number[]; // 0=Sun..6=Sat; these days never cost HP or streak at finalize
 }
 
 export const DEFAULT_CONFIG: QuestLogConfig = {
@@ -70,6 +71,7 @@ export const DEFAULT_CONFIG: QuestLogConfig = {
   confettiEnabled: true,
   sfxEnabled: true,
   missionRolloverEnabled: true,
+  excludedWeekdays: [],
 };
 
 const FALLBACK_GLYPH = "🏷️";

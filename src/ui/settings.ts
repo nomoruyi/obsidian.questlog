@@ -68,6 +68,31 @@ export class QuestLogSettingTab extends PluginSettingTab {
         t.setValue(cfg.streakEnabled).onChange(async (v) => { cfg.streakEnabled = v; await this.plugin.saveState(); this.plugin.afterEconomyChange(); }),
       );
 
+    containerEl.createEl("h4", { text: "Excluded days" });
+    containerEl.createEl("p", { text: "Toggle off a weekday to exempt it from HP damage, missed-day, and streak checks at finalize. It still regens HP and still earns the flat day reward." });
+
+    const WEEKDAYS: { label: string; dow: number }[] = [
+      { label: "Sunday", dow: 0 },
+      { label: "Monday", dow: 1 },
+      { label: "Tuesday", dow: 2 },
+      { label: "Wednesday", dow: 3 },
+      { label: "Thursday", dow: 4 },
+      { label: "Friday", dow: 5 },
+      { label: "Saturday", dow: 6 },
+    ];
+    for (const { label, dow } of WEEKDAYS) {
+      new Setting(containerEl)
+        .setName(label)
+        .addToggle((t) =>
+          t.setValue(cfg.excludedWeekdays.includes(dow)).onChange(async (v) => {
+            cfg.excludedWeekdays = v
+              ? [...cfg.excludedWeekdays, dow]
+              : cfg.excludedWeekdays.filter((d) => d !== dow);
+            await this.plugin.saveState();
+          }),
+        );
+    }
+
     const numField = (name: string, get: () => number, set: (n: number) => void) =>
       new Setting(containerEl).setName(name).addText((t) =>
         t.setValue(String(get())).onChange(async (v) => {
