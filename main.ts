@@ -248,7 +248,7 @@ export default class QuestLogPlugin extends Plugin {
       leaf = workspace.getRightLeaf(false)!;
       await leaf.setViewState({ type: QUESTLOG_VIEW, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 
   // One-time: existing installs persisted the old "rewards.md" default, which
