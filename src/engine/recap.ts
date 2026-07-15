@@ -3,7 +3,6 @@ import { QuestLogConfig } from "../config";
 import { SettlementResult } from "./settlement";
 import { aggregateXp } from "./xp";
 import { aggregateCoins } from "./coins";
-import { aggregateDayDamage } from "./hp";
 import { levelForXp, rankForLevel } from "./levels";
 
 export interface SkillLevelUp {
@@ -57,7 +56,6 @@ export function buildRecap(args: RecapArgs): Recap {
 
   let xpGained = 0;
   let coinsGained = 0;
-  let hpDamage = 0;
   const perSkillGained: Record<string, number> = {};
 
   for (const note of args.settledNotes) {
@@ -67,7 +65,6 @@ export function buildRecap(args: RecapArgs): Recap {
       perSkillGained[skill] = (perSkillGained[skill] ?? 0) + amt;
     }
     coinsGained += aggregateCoins(note, config.coinGrid);
-    hpDamage += aggregateDayDamage(note, config);
   }
 
   const overallAfter = levelForXp(args.overallXpAtStart, base, exp);
@@ -94,7 +91,7 @@ export function buildRecap(args: RecapArgs): Recap {
     hpStart: result.hpStart,
     hpEnd: result.hpEnd,
     hpRegen: result.daysSettled * args.dailyRegen,
-    hpDamage,
+    hpDamage: result.hpDamage,
     setbackFired: result.setbackFired,
     tokensUsed: result.tokensUsed,
     streakBefore: result.streakBefore,

@@ -25,6 +25,7 @@ export interface SettlementResult {
   streakAfter: number;
   newLastSettledDate: string;
   dayRewardCoins: number;
+  hpDamage: number;      // gross damage actually applied (excluded days contribute 0)
 }
 
 // ISO date helpers (UTC, so no DST drift). ISO strings sort chronologically.
@@ -75,7 +76,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
     return {
       daysSettled: 0, missedDays: 0, hpStart, hpEnd: state.hp, tokensUsed: 0,
       setbackFired: false, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
-      dayRewardCoins: 0,
+      dayRewardCoins: 0, hpDamage: 0,
     };
   }
 
@@ -83,6 +84,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   let streakDays = 0;
   let missedDays = 0;
   let setbackFired = false;
+  let hpDamage = 0;
 
   for (const date of dates) {
     const exempt = isExcludedWeekday(date, config.excludedWeekdays);
@@ -95,6 +97,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
     if (!exempt) streakDays++;
     if (config.hpEnabled) {
       const damage = exempt ? 0 : aggregateDayDamage(note!, config);
+      hpDamage += damage;
       const { hp, hitZero } = applyDay(state.hp, state.maxHP, state.dailyRegen, damage);
       state.hp = hp;
       if (hitZero && applySetback(state, config)) setbackFired = true;
@@ -124,7 +127,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   return {
     daysSettled, missedDays, hpStart, hpEnd: state.hp, tokensUsed,
     setbackFired, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
-    dayRewardCoins,
+    dayRewardCoins, hpDamage,
   };
 }
 

@@ -16,6 +16,7 @@ function mkResult(over: Partial<SettlementResult> = {}): SettlementResult {
     streakAfter: 0,
     newLastSettledDate: "2026-06-28",
     dayRewardCoins: 0,
+    hpDamage: 0,
     ...over,
   };
 }
@@ -110,12 +111,8 @@ describe("buildRecap", () => {
     expect(recap.overallAfter).toBe(2);
   });
 
-  it("passes HP/streak fields through and computes gross regen + damage", () => {
-    // two notes with undone tasks: must => 10 dmg, should => 5 dmg
-    const dmg1 = parseNote(`- [ ] X #prio/must #diff/hard`);
-    const dmg2 = parseNote(`- [ ] Y #prio/should #diff/easy`);
+  it("passes HP/streak fields through, computes gross regen, and takes damage from the settlement result", () => {
     const recap = buildRecap(mkArgs({
-      settledNotes: [dmg1, dmg2],
       dailyRegen: 10,
       result: mkResult({
         daysSettled: 2,
@@ -125,6 +122,7 @@ describe("buildRecap", () => {
         tokensUsed: 1,
         streakBefore: 5,
         streakAfter: 6,
+        hpDamage: 15,
       }),
     }));
     expect(recap.hpStart).toBe(80);
@@ -135,6 +133,6 @@ describe("buildRecap", () => {
     expect(recap.daysSettled).toBe(2);
     expect(recap.missedDays).toBe(1);
     expect(recap.hpRegen).toBe(20);   // daysSettled(2) * dailyRegen(10)
-    expect(recap.hpDamage).toBe(15);  // 10 + 5
+    expect(recap.hpDamage).toBe(15);  // straight from result, not recomputed from notes
   });
 });
