@@ -5,8 +5,8 @@ import { ParsedNote, ParsedTask } from "../src/types";
 
 const cfg = DEFAULT_CONFIG;
 
-function task(p: ParsedTask["priority"], done: boolean): ParsedTask {
-  return { text: "", done, priority: p, difficulty: "medium", category: "general", optional: false, section: "", children: [] };
+function task(p: ParsedTask["priority"], done: boolean, section = ""): ParsedTask {
+  return { text: "", done, priority: p, difficulty: "medium", category: "general", section, children: [] };
 }
 
 describe("viceLoss", () => {
@@ -35,6 +35,14 @@ describe("aggregateDayDamage", () => {
     };
     // undone: 10 (must) + 5 (should) = 15 ; vice: 2*10 = 20 => 35
     expect(aggregateDayDamage(note, cfg)).toBe(35);
+  });
+
+  it("never charges for unfinished missions (they roll over instead)", () => {
+    const note: ParsedNote = {
+      tasks: [task("must", false, "missions:"), task("should", false, "missions:")],
+      vices: [],
+    };
+    expect(aggregateDayDamage(note, cfg)).toBe(0);
   });
 });
 

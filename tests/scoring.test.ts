@@ -3,16 +3,17 @@ import { parseNote } from "../src/parser/parser";
 import { computeScore } from "../src/engine/scoring";
 
 describe("computeScore", () => {
-  it("counts non-optional, non-mission top-level tasks", () => {
+  it("counts every non-mission top-level task, including could", () => {
     const md = `### Missions
 - [x] Quest A #prio/must
 ### Must Do
 - [x] Done one #prio/must
 - [ ] Not done #prio/must
-- [x] Optional but done #opt #prio/should`;
+### Could Do
+- [ ] Water plants #prio/could`;
     const score = computeScore(parseNote(md), "mission");
-    // missions excluded; optional excluded → total 2, done 1
-    expect(score).toEqual({ done: 1, total: 2 });
+    // missions excluded → total 3, done 1
+    expect(score).toEqual({ done: 1, total: 3 });
   });
 
   it("treats a rolled-up parent as one unit", () => {

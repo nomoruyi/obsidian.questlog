@@ -14,9 +14,6 @@ describe("resolveGlyph", () => {
     expect(resolveGlyph("diff/medium", SKILLS)).toBe("🟡");
     expect(resolveGlyph("diff/hard", SKILLS)).toBe("🔴");
   });
-  it("maps #opt to ➕", () => {
-    expect(resolveGlyph("opt", SKILLS)).toBe("➕");
-  });
   it("maps #vice to ☠️", () => {
     expect(resolveGlyph("vice", SKILLS)).toBe("☠️");
   });
@@ -60,8 +57,8 @@ describe("glyphSpans", () => {
     const line = "- [ ] Task #prio/must #weird #mind";
     expect(glyphSpans(line, SKILLS).map((s) => s.glyph)).toEqual(["‼️", "🧠"]);
   });
-  it("handles a checked box and an #opt tag", () => {
-    const line = "- [x] Bags #prio/should #opt";
-    expect(glyphSpans(line, SKILLS).map((s) => s.glyph)).toEqual(["❗", "➕"]);
+  it("handles a checked box", () => {
+    const line = "- [x] Bags #prio/should #home";
+    expect(glyphSpans(line, SKILLS).map((s) => s.glyph)).toEqual(["❗", "🏠"]);
   });
 });

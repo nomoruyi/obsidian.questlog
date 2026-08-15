@@ -16,7 +16,6 @@ const DIFF_GLYPH: Record<Difficulty, string> = { easy: "🟢", medium: "🟡", h
 export function resolveGlyph(tagLower: string, skillGlyphs: Record<string, string>): string | null {
   if (tagLower.startsWith("prio/")) return PRIO_GLYPH[tagLower.slice(5) as Priority] ?? null;
   if (tagLower.startsWith("diff/")) return DIFF_GLYPH[tagLower.slice(5) as Difficulty] ?? null;
-  if (tagLower === "opt") return "➕";
   if (tagLower === "vice") return "☠️";
   return skillGlyphs[tagLower] ?? null;
 }

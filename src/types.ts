@@ -7,7 +7,6 @@ export interface ParsedTask {
   priority: Priority;
   difficulty: Difficulty;
   category: string;      // skill key; "general" if untagged
-  optional: boolean;     // had #opt
   section: string;       // lowercased nearest heading text ("" if none)
   children: ParsedTask[];
 }

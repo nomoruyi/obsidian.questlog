@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { setPrefixedTag, setCategory, toggleOptional, hasOptional, toggleVice, hasVice, normalizeTagOrder } from "../src/tags/edit";
+import { setPrefixedTag, setCategory, toggleVice, hasVice, normalizeTagOrder } from "../src/tags/edit";
 
 describe("setPrefixedTag", () => {
   it("replaces an existing #diff/* tag and appends with two-space separation", () => {
@@ -39,20 +39,6 @@ describe("setCategory", () => {
   });
 });
 
-describe("toggleOptional / hasOptional", () => {
-  it("adds #opt when absent", () => {
-    expect(toggleOptional("- [ ] Bags #prio/should #home"))
-      .toBe("- [ ] Bags #prio/should #home  #opt");
-  });
-  it("removes #opt when present", () => {
-    expect(toggleOptional("- [ ] Bags #prio/should #home #opt"))
-      .toBe("- [ ] Bags #prio/should #home");
-  });
-  it("detects #opt", () => {
-    expect(hasOptional("- [ ] Bags #opt")).toBe(true);
-    expect(hasOptional("- [ ] Bags #prio/must")).toBe(false);
-  });
-});
 
 describe("toggleVice / hasVice", () => {
   it("adds #vice when absent", () => {
@@ -76,9 +62,9 @@ describe("normalizeTagOrder", () => {
     expect(normalizeTagOrder("- [ ] Shower #body #diff/easy #prio/must", SKILLS))
       .toBe("- [ ] Shower  #prio/must  #diff/easy  #body");
   });
-  it("places opt after the category", () => {
-    expect(normalizeTagOrder("- [ ] Bags #opt #home #prio/should", SKILLS))
-      .toBe("- [ ] Bags  #prio/should  #home  #opt");
+  it("keeps unknown tags last", () => {
+    expect(normalizeTagOrder("- [ ] Bags #weird #home #prio/should", SKILLS))
+      .toBe("- [ ] Bags  #prio/should  #home  #weird");
   });
   it("orders a bare-bullet vice line (diff before vice)", () => {
     expect(normalizeTagOrder("- Cigarettes: 3 #vice #diff/easy", SKILLS))

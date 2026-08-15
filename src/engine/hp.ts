@@ -1,5 +1,6 @@
 import { ParsedNote, ParsedTask, Difficulty } from "../types";
 import { QuestLogConfig } from "../config";
+import { isMissionTask } from "./scoring";
 
 export function viceLoss(count: number, difficulty: Difficulty, cfg: QuestLogConfig): number {
   return count * cfg.viceLoss[difficulty];
@@ -11,7 +12,10 @@ export function taskHpPenalty(task: ParsedTask, cfg: QuestLogConfig): number {
 
 export function aggregateDayDamage(note: ParsedNote, cfg: QuestLogConfig): number {
   let dmg = 0;
-  for (const t of note.tasks) dmg += taskHpPenalty(t, cfg);
+  for (const t of note.tasks) {
+    if (isMissionTask(t, cfg.missionHeading)) continue;
+    dmg += taskHpPenalty(t, cfg);
+  }
   for (const v of note.vices) dmg += viceLoss(v.count, v.difficulty, cfg);
   return dmg;
 }

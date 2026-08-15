@@ -17,12 +17,7 @@ describe("parseNote", () => {
 
   it("applies defaults: should priority, medium difficulty, general category", () => {
     const note = parseNote(`- [ ] Untagged task`);
-    expect(note.tasks[0]).toMatchObject({ priority: "should", difficulty: "medium", category: "general", optional: false });
-  });
-
-  it("marks #opt tasks optional", () => {
-    const note = parseNote(`- [ ] Empty bags #opt`);
-    expect(note.tasks[0].optional).toBe(true);
+    expect(note.tasks[0]).toMatchObject({ priority: "should", difficulty: "medium", category: "general" });
   });
 
   it("rolls a parent up: done only when all children done", () => {

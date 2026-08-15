@@ -14,12 +14,11 @@ function indentWidth(spaces: string): number {
 }
 
 function parseTags(body: string, allowedSkills?: string[]): {
-  text: string; priority: Priority; difficulty: Difficulty; category: string; optional: boolean;
+  text: string; priority: Priority; difficulty: Difficulty; category: string;
 } {
   let priority: Priority = "should";
   let difficulty: Difficulty = "medium";
   let category = "general";
-  let optional = false;
   let categorySet = false;
 
   // A tag is a "#…" only when preceded by whitespace or line start (Obsidian's
@@ -36,8 +35,6 @@ function parseTags(body: string, allowedSkills?: string[]): {
     } else if (t.startsWith("diff/")) {
       const v = t.slice(5) as Difficulty;
       if (DIFFICULTIES.includes(v)) difficulty = v;
-    } else if (t === "opt") {
-      optional = true;
     } else if (isMetaTag(t)) {
       // reserved for later phases (vice / reward/* / target/*); not a category
     } else if (!categorySet && (!allowedSkills || allowedSkills.includes(t))) {
@@ -49,7 +46,7 @@ function parseTags(body: string, allowedSkills?: string[]): {
   }
 
   const text = body.replace(/(^|\s)#[\w/-]+/g, "$1").replace(/\s+/g, " ").trim();
-  return { text, priority, difficulty, category, optional };
+  return { text, priority, difficulty, category };
 }
 
 function viceDifficulty(line: string): Difficulty {
@@ -95,7 +92,7 @@ export function parseNote(markdown: string, allowedSkills?: string[]): ParsedNot
     const done = children.length > 0 ? children.every((c) => c.done) : t.ownDone;
     return {
       text: t.text, priority: t.priority, difficulty: t.difficulty,
-      category: t.category, optional: t.optional, section: t.section,
+      category: t.category, section: t.section,
       done, children,
     };
   };

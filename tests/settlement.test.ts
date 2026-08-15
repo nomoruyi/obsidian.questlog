@@ -7,7 +7,7 @@ import { cumulativeXpForLevel } from "../src/engine/levels";
 
 function emptyNote(): ParsedNote { return { tasks: [], vices: [] }; }
 function undoneMust(): ParsedTask {
-  return { text: "", done: false, priority: "must", difficulty: "medium", category: "general", optional: false, section: "", children: [] };
+  return { text: "", done: false, priority: "must", difficulty: "medium", category: "general", section: "", children: [] };
 }
 function resolverOf(map: Record<string, ParsedNote>): NoteResolver {
   return (d) => map[d] ?? null;

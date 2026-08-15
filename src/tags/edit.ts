@@ -38,17 +38,6 @@ export function setCategory(line: string, category: string): string {
   return appendTag(cleaned, category);
 }
 
-export function hasOptional(line: string): boolean {
-  for (const m of line.matchAll(TAG)) {
-    if (m[2].toLowerCase() === "opt") return true;
-  }
-  return false;
-}
-
-export function toggleOptional(line: string): string {
-  return hasOptional(line) ? removeTags(line, (v) => v === "opt") : appendTag(line, "opt");
-}
-
 export function hasVice(line: string): boolean {
   for (const m of line.matchAll(TAG)) {
     if (m[2].toLowerCase() === "vice") return true;
@@ -60,15 +49,14 @@ export function toggleVice(line: string): string {
   return hasVice(line) ? removeTags(line, (v) => v === "vice") : appendTag(line, "vice");
 }
 
-// Reorder a line's tags into the canonical order: prio → diff → cat → opt →
-// vice, with any unrecognized tags (and reserved reward/*/target/*) kept last in
+// Reorder a line's tags into the canonical order: prio → diff → cat → vice,
+// with any unrecognized tags (and reserved reward/*/target/*) kept last in
 // their original relative order. Tag case is preserved; separators normalize to
 // the two-space house style. Lines without tags are returned unchanged, and
 // [[#wikilinks]] are never treated as tags (Obsidian's boundary rule).
 export function normalizeTagOrder(line: string, skills: string[]): string {
   const prio: string[] = [];
   const diff: string[] = [];
-  const opt: string[] = [];
   const vice: string[] = [];
   const others: string[] = [];
   let cat: string | null = null;
@@ -78,7 +66,6 @@ export function normalizeTagOrder(line: string, skills: string[]): string {
     const lower = value.toLowerCase();
     if (lower.startsWith("prio/")) prio.push(value);
     else if (lower.startsWith("diff/")) diff.push(value);
-    else if (lower === "opt") opt.push(value);
     else if (lower === "vice") vice.push(value);
     else if (isMetaTag(lower)) others.push(value); // reward/*, target/* (reserved)
     else if (cat === null && skills.includes(lower)) cat = value;
@@ -86,7 +73,7 @@ export function normalizeTagOrder(line: string, skills: string[]): string {
   }
 
   const ordered = [
-    ...prio, ...diff, ...(cat !== null ? [cat] : []), ...opt, ...vice, ...others,
+    ...prio, ...diff, ...(cat !== null ? [cat] : []), ...vice, ...others,
   ];
   if (ordered.length === 0) return line;
 

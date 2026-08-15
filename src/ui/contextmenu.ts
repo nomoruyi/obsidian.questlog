@@ -1,6 +1,6 @@
 import { Editor, Menu } from "obsidian";
 import QuestLogPlugin from "../../main";
-import { setPrefixedTag, setCategory, toggleOptional, hasOptional, toggleVice, hasVice, normalizeTagOrder } from "../tags/edit";
+import { setPrefixedTag, setCategory, toggleVice, hasVice, normalizeTagOrder } from "../tags/edit";
 
 // Any "- " list bullet: checkbox tasks ("- [ ] …") AND plain bullets
 // ("- Cigarettes: 3"), so vices (which must be non-checkbox lines) are taggable.
@@ -60,13 +60,6 @@ export function registerTagMenu(plugin: QuestLogPlugin): void {
           for (const skill of plugin.data.config.skills) {
             cs.addItem((leaf) => leaf.setTitle(skill).onClick(() => apply((l) => setCategory(l, skill))));
           }
-        });
-
-        sub.addItem((leaf) => {
-          leaf
-            .setTitle("Optional")
-            .setChecked(hasOptional(editor.getLine(lines[0])))
-            .onClick(() => apply((l) => toggleOptional(l)));
         });
 
         sub.addItem((leaf) => {
