@@ -19,6 +19,9 @@ import { levelProgress, rankForLevel } from "./src/engine/levels";
 import { DashboardView, QUESTLOG_VIEW } from "./src/ui/dashboard";
 import { QuestLogSettingTab } from "./src/ui/settings";
 import { registerTagMenu } from "./src/ui/contextmenu";
+import { TagPaletteModal, listLinesAt } from "./src/ui/tagPalette";
+import { sweepTargets } from "./src/tags/palette";
+import { missionSectionRange } from "./src/engine/missions";
 import { glyphDecorator, qlRefresh } from "./src/render/livepreview";
 import { renderReading } from "./src/render/reading";
 import { EditorView } from "@codemirror/view";
@@ -76,6 +79,38 @@ export default class QuestLogPlugin extends Plugin {
         new Notice(changed === 0
           ? "QuestLog: tags already in order."
           : `QuestLog: reordered tags on ${changed} line${changed === 1 ? "" : "s"}.`);
+      },
+    });
+
+    this.addCommand({
+      id: "tag-mission",
+      name: "QuestLog: Tag mission",
+      hotkeys: [{ modifiers: ["Mod", "Alt"], key: "T" }],
+      editorCallback: (editor) => {
+        const lines = listLinesAt(editor);
+        if (lines.length === 0) { new Notice("QuestLog: no quest line at the cursor."); return; }
+        const cfg = this.data.config;
+        new TagPaletteModal(this.app, editor, [lines], cfg.skills, cfg.skillGlyphs).open();
+      },
+    });
+
+    this.addCommand({
+      id: "tag-missions-note",
+      name: "QuestLog: Tag missions in note",
+      hotkeys: [{ modifiers: ["Mod", "Shift", "Alt"], key: "T" }],
+      editorCallback: (editor) => {
+        const cfg = this.data.config;
+        const lines = editor.getValue().split(/\r?\n/);
+        if (missionSectionRange(lines, cfg.missionHeading) === null) {
+          new Notice("QuestLog: no missions section in this note.");
+          return;
+        }
+        const targets = sweepTargets(lines, cfg.missionHeading, cfg.skills);
+        if (targets.length === 0) {
+          new Notice("QuestLog: every mission is already tagged.");
+          return;
+        }
+        new TagPaletteModal(this.app, editor, targets.map((n) => [n]), cfg.skills, cfg.skillGlyphs).open();
       },
     });
 

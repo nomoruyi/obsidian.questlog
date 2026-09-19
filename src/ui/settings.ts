@@ -196,6 +196,7 @@ export class QuestLogSettingTab extends PluginSettingTab {
           cfg.skillGlyphs = glyphs;
           await this.plugin.saveState();
           this.plugin.refreshEditors();
+          this.plugin.afterEconomyChange();   // also re-renders the dashboard
         }),
       );
 

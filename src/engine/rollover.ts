@@ -1,6 +1,8 @@
 // Pure mission-rollover engine. Operates on raw markdown lines so tags,
 // nesting and inline text are preserved verbatim. No Obsidian imports.
 
+import { missionSectionRange } from "./missions";
+
 export interface MissionBlock {
   lines: string[]; // the mission line plus all its descendant lines, raw
   text: string;    // normalized identity of the top line, for dedup
@@ -14,7 +16,6 @@ export interface RolloverResult {
 }
 
 const CHECKBOX = /^(\s*)- \[( |x|X)\]\s+(.*)$/;
-const HEADING = /^(#{1,6})\s+(.*)$/;
 
 function indentWidth(spaces: string): number {
   let w = 0;
@@ -50,25 +51,20 @@ function blockDone(blockLines: string[]): boolean {
 
 export function extractUnfinishedMissions(markdown: string, missionHeading: string): MissionBlock[] {
   const lines = markdown.split(/\r?\n/);
-  const needle = missionHeading.toLowerCase();
+  const range = missionSectionRange(lines, missionHeading);
+  if (range === null) return [];
   const blocks: MissionBlock[] = [];
-  let inMission = false;
 
-  let i = 0;
-  while (i < lines.length) {
-    const h = lines[i].match(HEADING);
-    if (h) { inMission = h[2].trim().toLowerCase().includes(needle); i++; continue; }
-    if (!inMission) { i++; continue; }
-
+  let i = range.start;
+  while (i < range.end) {
     const m = lines[i].match(CHECKBOX);
     if (!m) { i++; continue; }
 
     const baseIndent = indentWidth(m[1]);
     const blockLines = [lines[i]];
     let j = i + 1;
-    while (j < lines.length) {
+    while (j < range.end) {
       const next = lines[j];
-      if (HEADING.test(next)) break;
       const nm = next.match(CHECKBOX);
       if (nm) {
         if (indentWidth(nm[1]) <= baseIndent) break; // sibling/dedent ends the block
@@ -87,29 +83,17 @@ export function extractUnfinishedMissions(markdown: string, missionHeading: stri
 
 export function insertMissions(todayMd: string, missionHeading: string, blocks: MissionBlock[]): RolloverResult {
   const lines = todayMd.split(/\r?\n/);
-  const needle = missionHeading.toLowerCase();
 
-  let headingIdx = -1;
-  let headingLevel = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const h = lines[i].match(HEADING);
-    if (h && h[2].trim().toLowerCase().includes(needle)) { headingIdx = i; headingLevel = h[1].length; break; }
-  }
-  if (headingIdx === -1) return { markdown: todayMd, inserted: 0, skipped: 0, headingMissing: true };
-
-  let sectionEnd = lines.length;
-  for (let i = headingIdx + 1; i < lines.length; i++) {
-    const h = lines[i].match(HEADING);
-    if (h && h[1].length <= headingLevel) { sectionEnd = i; break; }
-  }
+  const range = missionSectionRange(lines, missionHeading);
+  if (range === null) return { markdown: todayMd, inserted: 0, skipped: 0, headingMissing: true };
 
   const present = new Set<string>();
-  for (let i = headingIdx + 1; i < sectionEnd; i++) {
+  for (let i = range.start; i < range.end; i++) {
     if (CHECKBOX.test(lines[i])) present.add(normalizeText(lines[i]));
   }
 
   // Rolled missions go at the top of the section, immediately below the heading.
-  const insertAt = headingIdx + 1;
+  const insertAt = range.start;
 
   const toInsert: string[] = [];
   let inserted = 0, skipped = 0;

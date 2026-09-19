@@ -22,3 +22,16 @@
 .questlog-recap-sub { color: var(--text-muted); font-size: 0.85em; margin: 0.25em 0; }
 .questlog-recap-warn { color: var(--color-red, #e5534b); }
 .questlog-recap-levelup { margin: 0.15em 0; }
+.questlog-palette .ql-palette-head { display: flex; align-items: baseline; gap: 12px; font-weight: 600; margin-bottom: 0.75em; }
+.questlog-palette .ql-palette-count { margin-left: auto; color: var(--text-muted); font-size: 0.85em; font-weight: normal; }
+.questlog-palette .ql-palette-row { display: flex; align-items: center; gap: 10px; padding: 4px 8px; border-radius: 6px; }
+.questlog-palette .ql-palette-row.is-active { background: var(--background-modifier-hover); padding: 8px; }
+.questlog-palette .ql-palette-label { width: 5.5em; flex-shrink: 0; color: var(--text-muted); font-size: 0.85em; }
+.questlog-palette .ql-palette-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40vh; overflow-y: auto; }
+.questlog-palette .ql-palette-chip { display: inline-flex; align-items: center; gap: 6px; }
+.questlog-palette .ql-palette-chip.is-current { box-shadow: 0 0 0 2px var(--interactive-accent); }
+.questlog-palette .ql-palette-row:not(.is-active) .ql-palette-chip { opacity: 0.55; }
+.questlog-palette .ql-palette-row:not(.is-active) .ql-palette-chip.is-current { opacity: 1; }
+.questlog-palette .ql-palette-key { color: var(--text-muted); font-size: 0.75em; text-transform: uppercase; }
+.questlog-palette .ql-palette-foot { margin-top: 1em; font-family: var(--font-monospace); font-size: 0.85em; }
+.questlog-palette .ql-palette-hint { color: var(--text-muted); font-family: var(--font-interface); margin-top: 0.35em; }

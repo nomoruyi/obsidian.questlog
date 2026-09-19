@@ -89,3 +89,32 @@ describe("insertMissions", () => {
     expect(res.markdown).toBe(noHeading);
   });
 });
+
+describe("--- boundary", () => {
+  it("does not extract a mission below a --- inside the section", () => {
+    const md = [
+      "## Missions:",
+      "- [ ] Above the rule",
+      "",
+      "---",
+      "",
+      "- [ ] Below the rule",
+    ].join("\n");
+    const blocks = extractUnfinishedMissions(md, "mission");
+    expect(blocks.map((b) => b.text)).toEqual(["above the rule"]);
+  });
+
+  it("does not treat a mission below a --- as a duplicate", () => {
+    const today = [
+      "## Missions:",
+      "",
+      "---",
+      "",
+      "- [ ] Write Mail to MetallRente",
+    ].join("\n");
+    const result = insertMissions(today, "mission", [
+      { lines: ["- [ ] Write Mail to MetallRente"], text: "write mail to metallrente" },
+    ]);
+    expect(result.inserted).toBe(1);
+  });
+});
