@@ -22,18 +22,24 @@
 .questlog-recap-sub { color: var(--text-muted); font-size: 0.85em; margin: 0.25em 0; }
 .questlog-recap-warn { color: var(--color-red, #e5534b); }
 .questlog-recap-levelup { margin: 0.15em 0; }
-/* The palette is a handful of chip rows and should shrink-wrap. Two things
-   stop it: .modal is a flex item in .modal-container, so height:auto is
-   ignored if the container stretches its items (hence align-self), and the
-   app/theme rule it competes with may outrank a bare class (hence the
-   compound selector). */
+/* The palette is a handful of chip rows and should shrink-wrap, but .modal is
+   sized to fill by app/theme CSS that outranks anything we can reasonably
+   write — measured at exactly 85vh. !important is the tool for overriding
+   third-party rules you do not control, and the scope here is one class on our
+   own modal, so it cannot leak. */
 .modal-container .modal.questlog-palette {
-  width: auto; min-width: 0; max-width: min(92vw, 640px);
-  height: auto; min-height: 0; max-height: 85vh;
-  align-self: center;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: min(92vw, 640px);
+  max-height: 85vh;
 }
 .modal-container .modal.questlog-palette .modal-content {
-  height: auto; min-height: 0; max-height: none; flex-grow: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none;
+  flex-grow: 0;
 }
 /* We render our own title, so Obsidian's empty one is just dead space. */
 .modal-container .modal.questlog-palette .modal-header { display: none; }
