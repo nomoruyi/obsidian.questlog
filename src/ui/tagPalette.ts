@@ -219,7 +219,10 @@ export class TagPaletteModal extends Modal {
     el.empty();
 
     const head = el.createDiv({ cls: "ql-palette-head" });
-    head.createSpan({ text: questText(this.editor.getLine(this.units[this.idx][0])) });
+    // The template seeds an empty "- [ ] " placeholder, and the single-line
+    // command happily opens on it — so the title needs something to say.
+    const title = questText(this.editor.getLine(this.units[this.idx][0]));
+    head.createSpan({ cls: "ql-palette-title", text: title === "" ? "New quest" : title });
     if (this.sweeping) {
       head.createSpan({ cls: "ql-palette-count", text: `${this.idx + 1} / ${this.units.length}` });
     }
