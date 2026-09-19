@@ -22,10 +22,21 @@
 .questlog-recap-sub { color: var(--text-muted); font-size: 0.85em; margin: 0.25em 0; }
 .questlog-recap-warn { color: var(--color-red, #e5534b); }
 .questlog-recap-levelup { margin: 0.15em 0; }
-/* Obsidian sizes .modal from --dialog-width/--modal-height; the palette is a
-   handful of chip rows and should shrink-wrap instead. */
-.questlog-palette { width: auto; height: auto; min-width: 0; min-height: 0; max-width: min(92vw, 640px); }
-.questlog-palette .modal-content { height: auto; flex-grow: 0; }
+/* The palette is a handful of chip rows and should shrink-wrap. Two things
+   stop it: .modal is a flex item in .modal-container, so height:auto is
+   ignored if the container stretches its items (hence align-self), and the
+   app/theme rule it competes with may outrank a bare class (hence the
+   compound selector). */
+.modal-container .modal.questlog-palette {
+  width: auto; min-width: 0; max-width: min(92vw, 640px);
+  height: auto; min-height: 0; max-height: 85vh;
+  align-self: center;
+}
+.modal-container .modal.questlog-palette .modal-content {
+  height: auto; min-height: 0; max-height: none; flex-grow: 0;
+}
+/* We render our own title, so Obsidian's empty one is just dead space. */
+.modal-container .modal.questlog-palette .modal-header { display: none; }
 .questlog-palette .ql-palette-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 0.75em; }
 .questlog-palette .ql-palette-title { font-size: var(--h3-size, 1.4em); font-weight: 600; line-height: 1.25; }
 .questlog-palette .ql-palette-count { margin-left: auto; flex-shrink: 0; color: var(--text-muted); font-size: var(--font-ui-small); font-weight: normal; }
