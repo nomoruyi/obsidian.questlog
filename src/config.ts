@@ -24,8 +24,10 @@ export interface QuestLogConfig {
   potionPrices: { minor: number; normal: number; major: number };
   maxHpUpgradePrice: number;
   maxHpUpgradeAmount: number;
+  maxHpUpgradeStep: number;   // price increase per max-HP upgrade already bought
   regenUpgradePrice: number;
   regenUpgradeAmount: number;
+  regenUpgradeStep: number;   // price increase per regen upgrade already bought
   freezePrice: number;     // built-in freeze price
   finalizeDayReward: number; // flat coins granted per processed day at finalize; 0 = off
   confettiEnabled: boolean; // master toggle for level-up confetti
@@ -64,8 +66,10 @@ export const DEFAULT_CONFIG: QuestLogConfig = {
   potionPrices: { minor: 50, normal: 100, major: 150 },
   maxHpUpgradePrice: 300,
   maxHpUpgradeAmount: 10,
+  maxHpUpgradeStep: 5,
   regenUpgradePrice: 5000,
   regenUpgradeAmount: 2,
+  regenUpgradeStep: 5,
   freezePrice: 50,
   finalizeDayReward: 20,
   confettiEnabled: true,

@@ -315,6 +315,10 @@ export default class QuestLogPlugin extends Plugin {
       config: { ...DEFAULT_CONFIG, ...(saved?.config ?? {}) },
       state: { ...defaultState(), ...(saved?.state ?? {}) },
     };
+    // Installs from before longestStreak existed have no record to restore; the
+    // running streak is the best that can be proven, so seed from it over 0.
+    const s = this.data.state;
+    if (s.longestStreak < s.streak) s.longestStreak = s.streak;
   }
 
   async saveState() { await this.saveData(this.data); }

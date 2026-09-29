@@ -189,3 +189,59 @@ describe("formatSettlement", () => {
     expect(formatSettlement({ daysSettled: 1, missedDays: 0, hpStart: 10, hpEnd: 100, tokensUsed: 0, setbackFired: true, streakBefore: 1, streakAfter: 2, newLastSettledDate: "x", dayRewardCoins: 20, hpDamage: 0 })).toContain("HP hit 0");
   });
 });
+
+describe("longest streak", () => {
+  const today = "2026-06-10";
+
+  it("raises longestStreak as the streak grows", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-06" };
+    const map = { "2026-06-07": emptyNote(), "2026-06-08": emptyNote(), "2026-06-09": emptyNote() };
+    settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: DEFAULT_CONFIG });
+    expect(s.streak).toBe(3);
+    expect(s.longestStreak).toBe(3);
+  });
+
+  it("never lowers the record when every day in the range is missed", () => {
+    const s = { ...defaultState(), streak: 7, longestStreak: 7, lastSettledDate: "2026-06-06" };
+    settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf({}), state: s, config: DEFAULT_CONFIG });
+    expect(s.streak).toBe(0);
+    expect(s.longestStreak).toBe(7);
+  });
+
+  // finalizeDays settles the whole backlog in one call, so a run can peak and
+  // break inside a single settlement. The peak still counts.
+  it("records a peak reached mid-batch before a later missed day", () => {
+    const s = { ...defaultState(), streak: 5, longestStreak: 5, lastSettledDate: "2026-06-01" };
+    const map = { "2026-06-02": emptyNote(), "2026-06-03": emptyNote(), "2026-06-04": emptyNote() };
+    settleDays({ fromISO: "2026-06-02", todayISO: "2026-06-07", noteResolver: resolverOf(map), state: s, config: DEFAULT_CONFIG });
+    expect(s.streak).toBe(0);      // 06-05 and 06-06 missing, no freeze
+    expect(s.longestStreak).toBe(8); // 5 + 06-02..06-04
+  });
+
+  // Without the `run = 0` reset on a missed day the two runs merge into one.
+  it("does not merge two runs across an uncovered gap", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-01" };
+    const map = {
+      "2026-06-02": emptyNote(), "2026-06-03": emptyNote(),
+      "2026-06-05": emptyNote(), "2026-06-06": emptyNote(),
+    };
+    settleDays({ fromISO: "2026-06-02", todayISO: "2026-06-07", noteResolver: resolverOf(map), state: s, config: DEFAULT_CONFIG });
+    expect(s.streak).toBe(0);        // 06-04 missing, no freeze
+    expect(s.longestStreak).toBe(2); // not 4
+  });
+
+  it("counts a freeze-covered gap as one unbroken run", () => {
+    const s = { ...defaultState(), streak: 5, longestStreak: 5, inventory: { freeze: 1 }, lastSettledDate: "2026-06-01" };
+    const map = { "2026-06-02": emptyNote(), "2026-06-04": emptyNote(), "2026-06-05": emptyNote() };
+    settleDays({ fromISO: "2026-06-02", todayISO: "2026-06-06", noteResolver: resolverOf(map), state: s, config: DEFAULT_CONFIG });
+    expect(s.streak).toBe(8);        // 06-03 bridged by the token
+    expect(s.longestStreak).toBe(8);
+  });
+
+  it("leaves the record alone when the streak system is off", () => {
+    const s = { ...defaultState(), lastSettledDate: "2026-06-06" };
+    const map = { "2026-06-07": emptyNote(), "2026-06-08": emptyNote() };
+    settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: { ...DEFAULT_CONFIG, streakEnabled: false } });
+    expect(s.longestStreak).toBe(0);
+  });
+});

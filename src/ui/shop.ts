@@ -1,7 +1,7 @@
 import { App, Modal, Notice, TFile } from "obsidian";
 import QuestLogPlugin from "../../main";
 import { ShopItem, builtinItems, parseRewards, REWARDS_TEMPLATE } from "../shop/rewards";
-import { buy, redeem } from "../shop/shop";
+import { buy, redeem, itemPrice } from "../shop/shop";
 import { balance } from "../state/state";
 
 export class ShopModal extends Modal {
@@ -67,16 +67,17 @@ export class ShopModal extends Modal {
 
   private itemRow(parent: HTMLElement, item: ShopItem, canRedeem: boolean) {
     const owned = this.plugin.data.state.inventory[item.id] ?? 0;
+    const price = itemPrice(item, this.plugin.data.state);
     const row = parent.createDiv({ cls: "questlog-shop-item" });
 
     const info = row.createDiv({ cls: "questlog-shop-item-info" });
-    info.createSpan({ text: `${item.emoji} ${item.name} — 🪙 ${item.price}` });
+    info.createSpan({ text: `${item.emoji} ${item.name} — 🪙 ${price}${item.permanent ? " [perm]" : ""}` });
     if (item.desc) info.createEl("small", { text: item.desc });
 
     const actions = row.createDiv({ cls: "questlog-shop-item-actions" });
 
     const buyBtn = actions.createEl("button", { text: "Buy" });
-    buyBtn.disabled = balance(this.plugin.data.state) < item.price;
+    buyBtn.disabled = balance(this.plugin.data.state) < price;
     buyBtn.onclick = async () => {
       const r = buy(this.plugin.data.state, item);
       if (!r.ok) { new Notice("Not enough coins"); return; }

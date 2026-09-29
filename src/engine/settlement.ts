@@ -85,16 +85,24 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   let missedDays = 0;
   let setbackFired = false;
   let hpDamage = 0;
+  // finalizeDays settles the whole backlog at once, so a run can peak and break
+  // inside one call. Track it day by day instead of reading the end state.
+  let run = state.streak;
+  let peak = state.streak;
 
   for (const date of dates) {
     const exempt = isExcludedWeekday(date, config.excludedWeekdays);
     let note: ParsedNote | null = null;
     if (!exempt) {
       note = noteResolver(date);
-      if (note === null) { missedDays++; continue; }
+      if (note === null) { missedDays++; run = 0; continue; }
     }
     daysSettled++;
-    if (!exempt) streakDays++;
+    if (!exempt) {
+      streakDays++;
+      run++;
+      if (run > peak) peak = run;
+    }
     if (config.hpEnabled) {
       const damage = exempt ? 0 : aggregateDayDamage(note!, config);
       hpDamage += damage;
@@ -116,6 +124,9 @@ export function settleDays(args: SettlementArgs): SettlementResult {
       consumeFreeze(state, tokensUsed);
       state.streak = 0;
     }
+    // A freeze bridges its gap, so the covered run beats any peak seen in the loop.
+    if (state.streak > peak) peak = state.streak;
+    if (peak > state.longestStreak) state.longestStreak = peak;
   }
 
   const newLast = maxIso(state.lastSettledDate, lastDay);

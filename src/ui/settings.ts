@@ -2,6 +2,9 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import QuestLogPlugin from "../../main";
 import { Priority, Difficulty } from "../types";
 import { parseSkillsField, formatSkillsField } from "../config";
+import { levelEta, MIN_LEVEL_EXPONENT, MAX_LEVEL_EXPONENT } from "../engine/levels";
+import { avgXpPerNote } from "../state/state";
+import { classifyPeriodic } from "../vault/periodic";
 
 const PRIORITIES: Priority[] = ["must", "should", "could"];
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
@@ -13,6 +16,14 @@ export class QuestLogSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     const cfg = this.plugin.data.config;
+
+    const numField = (name: string, get: () => number, set: (n: number) => void) =>
+      new Setting(containerEl).setName(name).addText((t) =>
+        t.setValue(String(get())).onChange(async (v) => {
+          const n = Number(v);
+          if (!Number.isNaN(n)) { set(n); await this.plugin.saveState(); }
+        }),
+      );
 
     containerEl.createEl("h3", { text: "XP grid (priority × difficulty)" });
     for (const p of PRIORITIES) {
@@ -41,6 +52,53 @@ export class QuestLogSettingTab extends PluginSettingTab {
           );
       }
     }
+
+    containerEl.createEl("h3", { text: "Levels" });
+    containerEl.createEl("p", {
+      text: "Level N costs base × (N−1)^exponent XP in total. Changing either value recomputes every level — overall, skills, status bar, and the level-floor setback — from XP that stays exactly as it is. Nothing is lost.",
+    });
+
+    // Committed on blur/Enter rather than through onChange, which Obsidian fires
+    // on every keystroke: typing "1000" would otherwise persist 1, 10 and 100 on
+    // the way past, each one re-rendering every open note against a curve 1000x
+    // off. Out-of-range input snaps the box back to the stored value.
+    const curveField = (name: string, min: number, max: number, get: () => number, set: (n: number) => void) =>
+      new Setting(containerEl).setName(name).addText((t) => {
+        t.setValue(String(get()));
+        t.inputEl.addEventListener("change", async () => {
+          const n = Number(t.inputEl.value);
+          if (!Number.isFinite(n) || n < min || n > max) { t.setValue(String(get())); return; }
+          set(n);
+          await this.plugin.saveState();
+          renderEta();
+          this.plugin.afterEconomyChange();
+          this.plugin.refreshEditors();   // the in-note level badge reads the curve too
+        });
+      });
+
+    curveField("Level base (1–1,000,000)", 1, 1_000_000, () => cfg.levelBase, (n) => (cfg.levelBase = n));
+    curveField(`Level exponent (${MIN_LEVEL_EXPONENT}–${MAX_LEVEL_EXPONENT})`, MIN_LEVEL_EXPONENT, MAX_LEVEL_EXPONENT,
+      () => cfg.levelExponent, (n) => (cfg.levelExponent = n));
+
+    const etaEl = containerEl.createEl("p", { cls: "questlog-level-eta" });
+    // Weekly and monthly notes share the ledger, but only daily notes describe a
+    // per-day pace. Days with no note are absent entirely, so this is an average
+    // over logged days, not over the calendar.
+    const folders = this.plugin.periodicFolders();
+    const logged = Object.entries(this.plugin.data.state.ledger)
+      .filter(([path]) => classifyPeriodic(path, folders) === "daily")
+      .map(([, contribution]) => contribution);
+    const avg = avgXpPerNote(logged);
+    const renderEta = () => {
+      const { totalXp, days } = levelEta(100, cfg.levelBase, cfg.levelExponent, avg);
+      const head = `Level 100 ≈ ${totalXp.toLocaleString()} XP`;
+      // days is null whenever avg rounds to 0, which is not the same as having
+      // logged nothing — say which it is.
+      if (logged.length === 0) etaEl.setText(`${head} · no daily notes logged yet, so no pace estimate.`);
+      else if (days === null) etaEl.setText(`${head} · your ${logged.length} logged days average under 1 XP, so no pace estimate.`);
+      else etaEl.setText(`${head} · ~${days.toLocaleString()} logged days at your ${avg.toLocaleString()} XP per logged day.`);
+    };
+    renderEta();
 
     new Setting(containerEl)
       .setName("Rewards note path")
@@ -93,14 +151,6 @@ export class QuestLogSettingTab extends PluginSettingTab {
         );
     }
 
-    const numField = (name: string, get: () => number, set: (n: number) => void) =>
-      new Setting(containerEl).setName(name).addText((t) =>
-        t.setValue(String(get())).onChange(async (v) => {
-          const n = Number(v);
-          if (!Number.isNaN(n)) { set(n); await this.plugin.saveState(); }
-        }),
-      );
-
     numField("Starting max HP", () => cfg.startingMaxHP, (n) => (cfg.startingMaxHP = n));
     numField("Daily regen", () => cfg.defaultRegen, (n) => (cfg.defaultRegen = n));
 
@@ -130,8 +180,10 @@ export class QuestLogSettingTab extends PluginSettingTab {
     numField("Major potion price", () => cfg.potionPrices.major, (n) => (cfg.potionPrices.major = n));
     numField("Max-HP upgrade price", () => cfg.maxHpUpgradePrice, (n) => (cfg.maxHpUpgradePrice = n));
     numField("Max-HP upgrade amount", () => cfg.maxHpUpgradeAmount, (n) => (cfg.maxHpUpgradeAmount = n));
+    numField("Max-HP upgrade price step", () => cfg.maxHpUpgradeStep, (n) => (cfg.maxHpUpgradeStep = n));
     numField("Regen upgrade price", () => cfg.regenUpgradePrice, (n) => (cfg.regenUpgradePrice = n));
     numField("Regen upgrade amount", () => cfg.regenUpgradeAmount, (n) => (cfg.regenUpgradeAmount = n));
+    numField("Regen upgrade price step", () => cfg.regenUpgradeStep, (n) => (cfg.regenUpgradeStep = n));
 
     new Setting(containerEl)
       .setName("Reset settlement date to today")

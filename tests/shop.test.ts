@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { defaultState, balance } from "../src/state/state";
-import { buy, redeem, useItem } from "../src/shop/shop";
+import { buy, redeem, useItem, itemPrice } from "../src/shop/shop";
 import { ShopItem } from "../src/shop/rewards";
 import { DEFAULT_CONFIG } from "../src/config";
 
@@ -73,5 +73,42 @@ describe("useItem", () => {
   it("reports none when the item is not owned", () => {
     const s = defaultState();
     expect(useItem(s, "potion", cfg)).toEqual({ ok: false, reason: "none" });
+  });
+});
+
+const permItem: ShopItem = { id: "maxhp", emoji: "❤️", name: "Max HP +10", price: 300, desc: "", kind: "builtin", effect: { type: "maxhp", amount: 10 }, permanent: true, step: 5 };
+
+describe("itemPrice", () => {
+  it("ignores the purchase count for a non-permanent item", () => {
+    const s = { ...defaultState(), purchases: { potion: 4 } };
+    expect(itemPrice(item, s)).toBe(30);
+  });
+
+  it("adds one step per prior purchase of a permanent item", () => {
+    expect(itemPrice(permItem, defaultState())).toBe(300);
+    expect(itemPrice(permItem, { ...defaultState(), purchases: { maxhp: 3 } })).toBe(315);
+  });
+});
+
+describe("buying a permanent upgrade", () => {
+  it("charges the escalated price and counts the purchase", () => {
+    const s = { ...defaultState(), coinsEarned: 1000 };
+    expect(buy(s, permItem)).toEqual({ ok: true });
+    expect(buy(s, permItem)).toEqual({ ok: true });
+    expect(s.purchases).toEqual({ maxhp: 2 });
+    expect(s.coinsSpent).toBe(605);   // 300 + 305
+  });
+
+  it("rejects when the balance covers the base price but not the escalated one", () => {
+    const s = { ...defaultState(), coinsEarned: 302, purchases: { maxhp: 1 } };
+    expect(buy(s, permItem)).toEqual({ ok: false, reason: "insufficient" });
+    expect(s.purchases).toEqual({ maxhp: 1 });
+    expect(s.coinsSpent).toBe(0);
+  });
+
+  it("does not count purchases of ordinary items", () => {
+    const s = { ...defaultState(), coinsEarned: 100 };
+    buy(s, item);
+    expect(s.purchases).toEqual({});
   });
 });

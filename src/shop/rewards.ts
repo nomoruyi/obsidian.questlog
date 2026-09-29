@@ -14,6 +14,8 @@ export interface ShopItem {
   desc: string;
   kind: "builtin" | "custom";
   effect: ItemEffect;
+  permanent?: boolean;  // price escalates by `step` per copy already bought
+  step?: number;
 }
 
 export function builtinItems(config: QuestLogConfig): ShopItem[] {
@@ -21,8 +23,8 @@ export function builtinItems(config: QuestLogConfig): ShopItem[] {
     { id: "potion_minor", emoji: "🧪", name: "Minor Potion", price: config.potionPrices.minor, desc: "Restore 20 HP.", kind: "builtin", effect: { type: "heal", amount: 20 } },
     { id: "potion", emoji: "🧪", name: "Potion", price: config.potionPrices.normal, desc: "Restore 50 HP.", kind: "builtin", effect: { type: "heal", amount: 50 } },
     { id: "potion_major", emoji: "🧪", name: "Major Potion", price: config.potionPrices.major, desc: "Restore 100 HP.", kind: "builtin", effect: { type: "heal", amount: 100 } },
-    { id: "maxhp", emoji: "❤️", name: `Max HP +${config.maxHpUpgradeAmount}`, price: config.maxHpUpgradePrice, desc: "Permanently raise max HP.", kind: "builtin", effect: { type: "maxhp", amount: config.maxHpUpgradeAmount } },
-    { id: "regen", emoji: "♻️", name: `Regen +${config.regenUpgradeAmount}`, price: config.regenUpgradePrice, desc: "Permanently raise daily regen.", kind: "builtin", effect: { type: "regen", amount: config.regenUpgradeAmount } },
+    { id: "maxhp", emoji: "❤️", name: `Max HP +${config.maxHpUpgradeAmount}`, price: config.maxHpUpgradePrice, desc: "Permanently raise max HP.", kind: "builtin", effect: { type: "maxhp", amount: config.maxHpUpgradeAmount }, permanent: true, step: config.maxHpUpgradeStep },
+    { id: "regen", emoji: "♻️", name: `Regen +${config.regenUpgradeAmount}`, price: config.regenUpgradePrice, desc: "Permanently raise daily regen.", kind: "builtin", effect: { type: "regen", amount: config.regenUpgradeAmount }, permanent: true, step: config.regenUpgradeStep },
     { id: "freeze", emoji: "🧊", name: "Streak Freeze", price: config.freezePrice, desc: "Insurance: auto-covers a missed day at finalize.", kind: "builtin", effect: { type: "none" } },
   ];
 }

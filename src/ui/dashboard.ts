@@ -39,7 +39,10 @@ export class DashboardView extends ItemView {
 
     if (config.streakEnabled) {
       const freeze = state.inventory["freeze"] ?? 0;
-      el.createEl("p", { text: `🔥 Streak: ${state.streak} days · 🧊 ${freeze} freeze`, cls: "questlog-streak" });
+      el.createEl("p", {
+        text: `🔥 Streak: ${state.streak} days · best ${state.longestStreak} · 🧊 ${freeze} freeze`,
+        cls: "questlog-streak",
+      });
     }
 
     if (config.hpEnabled || config.streakEnabled) {
@@ -48,7 +51,7 @@ export class DashboardView extends ItemView {
     }
 
     el.createEl("p", {
-      text: `🪙 Balance: ${balance(state)}  (earned ${state.coinsEarned} · spent ${state.coinsSpent})`,
+      text: `🪙 Balance: ${balance(state)}  (earned ${state.coinsEarned})`,
       cls: "questlog-balance",
     });
 

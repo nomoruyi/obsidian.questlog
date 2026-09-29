@@ -5,10 +5,18 @@ import { QuestLogConfig } from "../config";
 export interface BuyResult { ok: boolean; reason?: "insufficient"; }
 export interface RedeemResult { ok: boolean; reason?: "none"; }
 
+// Permanent upgrades get dearer the more you own: base + step per prior buy.
+export function itemPrice(item: ShopItem, state: GameState): number {
+  if (!item.permanent) return item.price;
+  return item.price + (item.step ?? 0) * (state.purchases[item.id] ?? 0);
+}
+
 export function buy(state: GameState, item: ShopItem): BuyResult {
-  if (balance(state) < item.price) return { ok: false, reason: "insufficient" };
-  state.coinsSpent += item.price;
+  const price = itemPrice(item, state);
+  if (balance(state) < price) return { ok: false, reason: "insufficient" };
+  state.coinsSpent += price;
   state.inventory[item.id] = (state.inventory[item.id] ?? 0) + 1;
+  if (item.permanent) state.purchases[item.id] = (state.purchases[item.id] ?? 0) + 1;
   return { ok: true };
 }
 

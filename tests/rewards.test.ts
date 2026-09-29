@@ -69,3 +69,13 @@ describe("REWARDS_TEMPLATE", () => {
     expect(items[0].name).toBe("Chocolate bar");
   });
 });
+
+describe("permanent built-ins", () => {
+  it("marks only maxhp and regen permanent, each with its configured step", () => {
+    const items = builtinItems(DEFAULT_CONFIG);
+    expect(items.filter((i) => i.permanent).map((i) => i.id)).toEqual(["maxhp", "regen"]);
+    expect(items.find((i) => i.id === "maxhp")!.step).toBe(5);
+    expect(items.find((i) => i.id === "regen")!.step).toBe(5);
+    expect(items.find((i) => i.id === "potion")!.permanent).toBeUndefined();
+  });
+});
