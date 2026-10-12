@@ -17,6 +17,7 @@ export interface SettlementArgs {
 export interface SettlementResult {
   daysSettled: number;
   missedDays: number;
+  excludedDays: number;  // excluded weekdays: skipped entirely (no regen, damage, streak, or reward)
   hpStart: number;
   hpEnd: number;
   tokensUsed: number;
@@ -25,7 +26,7 @@ export interface SettlementResult {
   streakAfter: number;
   newLastSettledDate: string;
   dayRewardCoins: number;
-  hpDamage: number;      // gross damage actually applied (excluded days contribute 0)
+  hpDamage: number;      // gross damage actually applied
 }
 
 // ISO date helpers (UTC, so no DST drift). ISO strings sort chronologically.
@@ -74,7 +75,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
     const newLast = maxIso(state.lastSettledDate, lastDay);
     state.lastSettledDate = newLast;
     return {
-      daysSettled: 0, missedDays: 0, hpStart, hpEnd: state.hp, tokensUsed: 0,
+      daysSettled: 0, missedDays: 0, excludedDays: 0, hpStart, hpEnd: state.hp, tokensUsed: 0,
       setbackFired: false, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
       dayRewardCoins: 0, hpDamage: 0,
     };
@@ -83,6 +84,7 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   let daysSettled = 0;
   let streakDays = 0;
   let missedDays = 0;
+  let excludedDays = 0;
   let setbackFired = false;
   let hpDamage = 0;
   // finalizeDays settles the whole backlog at once, so a run can peak and break
@@ -91,20 +93,16 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   let peak = state.streak;
 
   for (const date of dates) {
-    const exempt = isExcludedWeekday(date, config.excludedWeekdays);
-    let note: ParsedNote | null = null;
-    if (!exempt) {
-      note = noteResolver(date);
-      if (note === null) { missedDays++; run = 0; continue; }
-    }
+    // Excluded days don't exist for the game: no regen, damage, streak, or day reward.
+    if (isExcludedWeekday(date, config.excludedWeekdays)) { excludedDays++; continue; }
+    const note = noteResolver(date);
+    if (note === null) { missedDays++; run = 0; continue; }
     daysSettled++;
-    if (!exempt) {
-      streakDays++;
-      run++;
-      if (run > peak) peak = run;
-    }
+    streakDays++;
+    run++;
+    if (run > peak) peak = run;
     if (config.hpEnabled) {
-      const damage = exempt ? 0 : aggregateDayDamage(note!, config);
+      const damage = aggregateDayDamage(note, config);
       hpDamage += damage;
       const { hp, hitZero } = applyDay(state.hp, state.maxHP, state.dailyRegen, damage);
       state.hp = hp;
@@ -136,17 +134,19 @@ export function settleDays(args: SettlementArgs): SettlementResult {
   state.coinsEarned += dayRewardCoins;
 
   return {
-    daysSettled, missedDays, hpStart, hpEnd: state.hp, tokensUsed,
+    daysSettled, missedDays, excludedDays, hpStart, hpEnd: state.hp, tokensUsed,
     setbackFired, streakBefore, streakAfter: state.streak, newLastSettledDate: newLast,
     dayRewardCoins, hpDamage,
   };
 }
 
 export function formatSettlement(r: SettlementResult): string {
-  if (r.daysSettled === 0 && r.missedDays === 0) {
+  if (r.daysSettled === 0 && r.missedDays === 0 && r.excludedDays === 0) {
     return "QuestLog: nothing to finalize — already up to date.";
   }
-  const parts = [`Finalized ${r.daysSettled + r.missedDays} day(s): ${r.daysSettled} done, ${r.missedDays} missed`];
+  let head = `Finalized ${r.daysSettled + r.missedDays + r.excludedDays} day(s): ${r.daysSettled} done, ${r.missedDays} missed`;
+  if (r.excludedDays > 0) head += `, ${r.excludedDays} excluded`;
+  const parts = [head];
   if (r.hpStart !== r.hpEnd) parts.push(`HP ${r.hpStart}→${r.hpEnd}`);
   if (r.tokensUsed > 0) parts.push(`🧊 ${r.tokensUsed} used`);
   if (r.streakBefore !== r.streakAfter) parts.push(`🔥 streak ${r.streakBefore}→${r.streakAfter}`);

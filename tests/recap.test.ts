@@ -8,6 +8,7 @@ function mkResult(over: Partial<SettlementResult> = {}): SettlementResult {
   return {
     daysSettled: 1,
     missedDays: 0,
+    excludedDays: 0,
     hpStart: 100,
     hpEnd: 100,
     tokensUsed: 0,
@@ -117,6 +118,7 @@ describe("buildRecap", () => {
       result: mkResult({
         daysSettled: 2,
         missedDays: 1,
+        excludedDays: 0,
         hpStart: 80,
         hpEnd: 72,
         tokensUsed: 1,

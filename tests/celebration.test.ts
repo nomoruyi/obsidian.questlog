@@ -5,7 +5,7 @@ import { planCelebration, confettiPlan, sfxSequence } from "../src/engine/celebr
 function mkRecap(over: Partial<Recap> = {}): Recap {
   return {
     fromISO: "2026-06-01", toISO: "2026-06-01",
-    daysSettled: 1, missedDays: 0,
+    daysSettled: 1, missedDays: 0, excludedDays: 0,
     xpGained: 0, coinsGained: 0, dayRewardCoins: 0,
     hpStart: 100, hpEnd: 100, hpRegen: 10, hpDamage: 0, setbackFired: false,
     tokensUsed: 0, streakBefore: 0, streakAfter: 1,

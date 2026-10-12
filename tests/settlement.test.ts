@@ -118,15 +118,16 @@ describe("settleDays", () => {
     expect(s.coinsEarned).toBe(0);
   });
 
-  it("excluded weekday needs no note, still settles, regens HP, and stays streak-neutral", () => {
+  it("excluded weekday needs no note, is skipped entirely (no regen), and stays streak-neutral", () => {
     // 2026-06-07 is a Sunday; exclude it. 08 and 09 are normal days with notes.
     const s = { ...defaultState(), hp: 50, lastSettledDate: "2026-06-06" };
     const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
     const map = { "2026-06-08": emptyNote(), "2026-06-09": emptyNote() }; // 07 has no note at all
     const r = settleDays({ fromISO: "2026-06-07", todayISO: today, noteResolver: resolverOf(map), state: s, config: cfg });
     expect(r.missedDays).toBe(0);        // Sunday is exempt, not missed
-    expect(r.daysSettled).toBe(3);        // all 3 days count as settled
-    expect(s.hp).toBe(80);                // 50 + 3*10 regen, no damage anywhere
+    expect(r.daysSettled).toBe(2);        // Sunday is not settled, only counted as excluded
+    expect(r.excludedDays).toBe(1);
+    expect(s.hp).toBe(70);                // 50 + 2*10 regen; the excluded day regens nothing
     expect(s.streak).toBe(2);             // only the 2 non-excluded days grow the streak
   });
 
@@ -135,8 +136,9 @@ describe("settleDays", () => {
     const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
     const map = { "2026-06-07": { tasks: [undoneMust(), undoneMust(), undoneMust()], vices: [] } }; // 30 dmg, but 07 is Sunday/excluded
     const r = settleDays({ fromISO: "2026-06-07", todayISO: "2026-06-08", noteResolver: resolverOf(map), state: s, config: cfg });
-    expect(r.daysSettled).toBe(1);
-    expect(s.hp).toBe(60);                // regen only, damage ignored on excluded day
+    expect(r.daysSettled).toBe(0);
+    expect(r.excludedDays).toBe(1);
+    expect(s.hp).toBe(50);                // neither regen nor damage on an excluded day
   });
 
   it("excluded weekday with no note does not consume freeze tokens or break the streak", () => {
@@ -148,12 +150,12 @@ describe("settleDays", () => {
     expect(s.streak).toBe(5);             // neutral: neither grows nor breaks
   });
 
-  it("excluded weekday still earns the flat day-reward coins", () => {
+  it("excluded weekday earns no flat day-reward coins", () => {
     const s = { ...defaultState(), lastSettledDate: "2026-06-06" };
     const cfg = { ...DEFAULT_CONFIG, excludedWeekdays: [0] };
     const r = settleDays({ fromISO: "2026-06-07", todayISO: "2026-06-08", noteResolver: resolverOf({}), state: s, config: cfg });
-    expect(r.dayRewardCoins).toBe(20);    // 1 excluded day * finalizeDayReward(20)
-    expect(s.coinsEarned).toBe(20);
+    expect(r.dayRewardCoins).toBe(0);
+    expect(s.coinsEarned).toBe(0);
   });
 
   it("reports only the damage it actually applied — excluded-day text is not counted", () => {
@@ -178,15 +180,16 @@ describe("settleDays", () => {
 
 describe("formatSettlement", () => {
   it("summarizes a normal run", () => {
-    const msg = formatSettlement({ daysSettled: 2, missedDays: 1, hpStart: 80, hpEnd: 65, tokensUsed: 1, setbackFired: false, streakBefore: 5, streakAfter: 7, newLastSettledDate: "2026-06-09", dayRewardCoins: 40, hpDamage: 15 });
+    const msg = formatSettlement({ daysSettled: 2, missedDays: 1, excludedDays: 0, hpStart: 80, hpEnd: 65, tokensUsed: 1, setbackFired: false, streakBefore: 5, streakAfter: 7, newLastSettledDate: "2026-06-09", dayRewardCoins: 40, hpDamage: 15 });
     expect(msg).toContain("2 done, 1 missed");
     expect(msg).toContain("HP 80→65");
     expect(msg).toContain("🧊 1 used");
     expect(msg).toContain("🔥 streak 5→7");
   });
   it("reports an up-to-date no-op and a setback", () => {
-    expect(formatSettlement({ daysSettled: 0, missedDays: 0, hpStart: 50, hpEnd: 50, tokensUsed: 0, setbackFired: false, streakBefore: 1, streakAfter: 1, newLastSettledDate: "x", dayRewardCoins: 0, hpDamage: 0 })).toContain("nothing to finalize");
-    expect(formatSettlement({ daysSettled: 1, missedDays: 0, hpStart: 10, hpEnd: 100, tokensUsed: 0, setbackFired: true, streakBefore: 1, streakAfter: 2, newLastSettledDate: "x", dayRewardCoins: 20, hpDamage: 0 })).toContain("HP hit 0");
+    expect(formatSettlement({ daysSettled: 0, missedDays: 0, excludedDays: 0, hpStart: 50, hpEnd: 50, tokensUsed: 0, setbackFired: false, streakBefore: 1, streakAfter: 1, newLastSettledDate: "x", dayRewardCoins: 0, hpDamage: 0 })).toContain("nothing to finalize");
+    expect(formatSettlement({ daysSettled: 0, missedDays: 0, excludedDays: 2, hpStart: 50, hpEnd: 50, tokensUsed: 0, setbackFired: false, streakBefore: 1, streakAfter: 1, newLastSettledDate: "x", dayRewardCoins: 0, hpDamage: 0 })).toContain("0 done, 0 missed, 2 excluded");
+    expect(formatSettlement({ daysSettled: 1, missedDays: 0, excludedDays: 0, hpStart: 10, hpEnd: 100, tokensUsed: 0, setbackFired: true, streakBefore: 1, streakAfter: 2, newLastSettledDate: "x", dayRewardCoins: 20, hpDamage: 0 })).toContain("HP hit 0");
   });
 });
 

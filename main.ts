@@ -223,7 +223,7 @@ export default class QuestLogPlugin extends Plugin {
     await this.saveState();
     this.afterEconomyChange();
 
-    if (result.daysSettled + result.missedDays === 0) {
+    if (result.daysSettled + result.missedDays + result.excludedDays === 0) {
       new Notice(formatSettlement(result));
       return;
     }

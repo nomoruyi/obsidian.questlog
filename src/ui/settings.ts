@@ -127,7 +127,7 @@ export class QuestLogSettingTab extends PluginSettingTab {
       );
 
     containerEl.createEl("h4", { text: "Excluded days" });
-    containerEl.createEl("p", { text: "Toggle off a weekday to exempt it from HP damage, missed-day, and streak checks at finalize. It still regens HP and still earns the flat day reward." });
+    containerEl.createEl("p", { text: "Toggle off a weekday to skip it entirely at finalize: no HP damage or regen, no missed-day or streak checks, and no flat day reward." });
 
     const WEEKDAYS: { label: string; dow: number }[] = [
       { label: "Sunday", dow: 0 },

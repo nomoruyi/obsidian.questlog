@@ -37,7 +37,7 @@ export class RecapModal extends Modal {
 
     el.createEl("h2", { text: "Day finalized" });
     el.createEl("p", {
-      text: `📅 ${r.fromISO} → ${r.toISO} · ${r.daysSettled} done, ${r.missedDays} missed`,
+      text: `📅 ${r.fromISO} → ${r.toISO} · ${r.daysSettled} done, ${r.missedDays} missed${r.excludedDays > 0 ? `, ${r.excludedDays} excluded` : ""}`,
       cls: "questlog-recap-sub",
     });
 

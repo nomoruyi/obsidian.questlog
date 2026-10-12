@@ -16,6 +16,7 @@ export interface Recap {
   toISO: string;
   daysSettled: number;
   missedDays: number;
+  excludedDays: number;
 
   xpGained: number;
   coinsGained: number;
@@ -85,6 +86,7 @@ export function buildRecap(args: RecapArgs): Recap {
     toISO: args.toISO,
     daysSettled: result.daysSettled,
     missedDays: result.missedDays,
+    excludedDays: result.excludedDays,
     xpGained,
     coinsGained,
     dayRewardCoins: result.dayRewardCoins,
